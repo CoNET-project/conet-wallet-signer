@@ -1,0 +1,42 @@
+{
+	"dataDir": "/tmp/wallet-signer-postsign-candidate/state",
+	"logDir": "/tmp/wallet-signer-postsign-candidate/log",
+	"adminSocket": "/tmp/wallet-signer-postsign-candidate/admin.sock",
+	"policyFile": "/tmp/wallet-signer-postsign-candidate/policy.json",
+	"rpc": { "unix": [] },
+	"chains": {
+		"224422": { "rpcUrls": ["http://127.0.0.1:9"], "resendAfterMs": 60000, "maxResends": 3, "receiptPollMs": 2000 }
+	},
+	"gasKeeper": {
+		"enabled": false,
+		"postSignEnabled": false,
+		"intervalMs": 60000,
+		"refusedOwners": [],
+		"chains": {
+			"224422": {
+				"wallets": ["0xcFAF85E6C1765DA01a4Dc58C81b28Cd572067135"],
+				"postSignArray": "lab_mining_pool_payout",
+				"minWei": "1",
+				"targetWei": "100000000000000000",
+				"perAddressDailyWei": "0",
+				"globalDailyWei": "0",
+				"budgetWei": "0",
+				"maxFeePerGasWei": "0",
+				"pmWarnWei": "0",
+				"pmCriticalWei": "0"
+			}
+		}
+	},
+	"pmLabInitialGas": {
+		"enabled": false,
+		"dryRun": true,
+		"maxSpendWei": "0",
+		"dailyCapWei": "0",
+		"maxFeePerGasWei": "0",
+		"maxPriorityFeePerGasWei": "0"
+	},
+	"pmOneShot": { "enabled": false },
+	"alerts": { "host": "wallet-signer-postsign-candidate" },
+	"scryptN": 262144,
+	"keyWaitMs": 30000
+}
