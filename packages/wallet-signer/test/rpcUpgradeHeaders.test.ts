@@ -177,6 +177,18 @@ test('TLS, proxied, and Unix RPC listeners reject Upgrade headers before identit
 			assert.deepEqual(JSON.parse(normal.body), { state: 'locked' }, `${target.name} ordinary health response`)
 			assert.equal(calls.authorize, before.authorize + 1, `${target.name} ordinary request reaches authorization`)
 			assert.equal(calls.policyClient, before.policyClient + 1, `${target.name} ordinary request reaches policy lookup`)
+
+			const beforeRpc = { ...calls }
+			const rpc = await requestRaw(target, [], false, JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'signer_status', params: [] }))
+			assert.equal(rpc.status, 200, `${target.name} ordinary JSON-RPC status`)
+			assert.deepEqual(JSON.parse(rpc.body), {
+				jsonrpc: '2.0',
+				id: 2,
+				result: { state: 'locked', version: 'synthetic-test', arrays: [], denied: [], compromised: [] },
+			}, `${target.name} ordinary signer_status dispatch`)
+			assert.equal(calls.authorize, beforeRpc.authorize + 1, `${target.name} normal RPC reaches authorization`)
+			assert.equal(calls.policyClient, beforeRpc.policyClient + 1, `${target.name} normal RPC reaches policy lookup`)
+			assert.equal(calls.dispatch, beforeRpc.dispatch + 2, `${target.name} normal RPC reaches service dispatch`)
 		}
 
 		const triggers = [
