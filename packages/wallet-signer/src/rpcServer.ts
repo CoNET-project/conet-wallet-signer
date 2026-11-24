@@ -71,6 +71,7 @@ export function startRpcServers(
 				minVersion: 'TLSv1.3',
 			},
 			(req, res) => {
+				if (rejectHttpUpgrade(svc, req, res, 'tls')) return
 				if (rejectForgedProxyHeaders(svc, req, res, 'tls')) return
 				const sock = req.socket as TLSSocket
 				const cert = sock.getPeerCertificate()
@@ -85,6 +86,7 @@ export function startRpcServers(
 		const p = cfg.proxied
 		const secret = p.secretSha256 ? Buffer.from(p.secretSha256.replace(/^0x/, ''), 'hex') : undefined
 		const srv = createHttpServer((req, res) => {
+			if (rejectHttpUpgrade(svc, req, res, 'proxied')) return
 			const id = proxiedIdentity(svc, req, res, secret)
 			if (id) void handle(svc, id, req, res)
 		})
@@ -101,6 +103,7 @@ export function startRpcServers(
 	// If a declared gid does not match after listen, only this listener is closed.
 	for (const u of cfg.unix ?? []) {
 		const srv = createHttpServer((req, res) => {
+			if (rejectHttpUpgrade(svc, req, res, 'unix')) return
 			if (rejectForgedProxyHeaders(svc, req, res, 'unix')) return
 			handle(svc, { client: u.client, via: 'unix' }, req, res).catch((err: unknown) => {
 				onEvent({ client: u.client, path: u.path, event: 'runtime_error', detail: errorMessage(err) })
@@ -137,6 +140,27 @@ export function startRpcServers(
 
 function proxyHeaderNames(req: IncomingMessage): string[] {
 	return Object.keys(req.headersDistinct).filter((h) => h.startsWith(PROXY_HEADER_PREFIX))
+}
+
+/** Reject HTTP protocol-switch intent before listener identity, authorization, or RPC handling. */
+function rejectHttpUpgrade(svc: SignerService, req: IncomingMessage, res: ServerResponse, via: Via): boolean {
+	const headers = req.headersDistinct
+	const hasUpgradeHeader = (headers.upgrade?.length ?? 0) > 0
+	const connectionRequestsUpgrade = (headers.connection ?? []).some((value) =>
+		value.split(',').some((token) => token.trim().toLowerCase() === 'upgrade'),
+	)
+	const hasWebSocketHeader = Object.keys(headers).some((name) => name.toLowerCase().startsWith('sec-websocket-'))
+	if (!hasUpgradeHeader && !connectionRequestsUpgrade && !hasWebSocketHeader) return false
+
+	svc.audit.write({ event: 'deny', via, reason: 'websocket_upgrade' })
+	const body = JSON.stringify({ error: 'HTTP Upgrade is disabled' })
+	res.writeHead(400, {
+		'connection': 'close',
+		'content-type': 'application/json',
+		'content-length': Buffer.byteLength(body),
+	})
+	res.end(body)
+	return true
 }
 
 /** On listeners that are not behind nginx, an X-WS-* header can only be a forgery. */

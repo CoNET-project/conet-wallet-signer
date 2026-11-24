@@ -12,7 +12,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"check:no-websocket": "node scripts/checkNoWebSocket.mjs",
-		"test:unit": "node --require ./dist/src/noWebSocket.js --test dist/test/unit.test.js dist/test/vdrPayoutSocket.test.js dist/test/labPayoutSocket.test.js dist/test/pmGrantAdmin.test.js dist/test/conetRelayRpc.test.js",
+		"test:unit": "node --require ./dist/src/noWebSocket.js --test dist/test/unit.test.js dist/test/vdrPayoutSocket.test.js dist/test/labPayoutSocket.test.js dist/test/pmGrantAdmin.test.js dist/test/conetRelayRpc.test.js dist/test/rpcUpgradeHeaders.test.js",
 		"test:anvil": "node --require ./dist/src/noWebSocket.js --test dist/test/oracleOwnerAnvil.test.js",
 		"test:e2e": "node dist/test/e2e.js",
 		"test:pm-anvil": "node --require ./dist/src/noWebSocket.js --test dist/test/pmGrantRealTx.test.js",
